@@ -9,7 +9,7 @@ class Config:
     dataroot: str = "celeba/"
     batch_size: int = 128
     image_size: int = 64
-    num_epochs: int = 5
+    num_epochs: int = 30
     ngpu: int = 1
     nc: int = 3
     nz: int = 100
@@ -19,4 +19,7 @@ class Config:
     beta1: float = 0.5
     device: str = "cuda" if torch.cuda.is_available() else "cpu"
     dataset_name: str = "celeba"
-    workers: int = 2
+    workers: int = 4
+    name: str = "test_run"
+    len_epoch: int = 100
+    log_step: int = 100

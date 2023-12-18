@@ -1,9 +1,11 @@
-import os
+from pathlib import Path
 
 import torch
-from torchvision.utils import save_image
+from torchvision.utils import make_grid, save_image
+from tqdm import tqdm
 
 import wandb
+from utils import chdir, create_gif
 
 
 def update_discriminator(
@@ -50,14 +52,19 @@ def log_generated_images(generator, fixed_noise, epoch, device):
         fake = generator(fixed_noise).detach().cpu()
         save_image(
             fake,
-            os.path.join(wandb.run.dir, f"generated_images_epoch_{epoch}.png"),
+            Path("images") / f"generated_images_epoch_{epoch}.png",
             normalize=True,
         )
+
         wandb.log({"Generated Images": [wandb.Image(fake, caption=f"Epoch {epoch}")]})
+        img = make_grid(fake, padding=2, normalize=True)
+
+    return img.permute((1, 2, 0)).numpy()
 
 
 def train(discriminator, generator, dataloader, config):
     wandb.init(project="gan_project", name=config.name)
+    chdir(config)
 
     criterion = torch.nn.BCELoss()
     optimizerD = torch.optim.Adam(
@@ -68,11 +75,18 @@ def train(discriminator, generator, dataloader, config):
     )
     fixed_noise = torch.randn(64, config.nz, 1, 1, device=config.device)
 
-    num_batches = len(dataloader)
+    img_list = []
 
     for epoch in range(config.num_epochs):
         data_iter = iter(dataloader)
-        for i in range(num_batches):
+        epoch_loss_D = 0.0
+        epoch_loss_G = 0.0
+
+        for i in tqdm(
+            range(config.len_epoch),
+            desc=f"Epoch {epoch + 1}/{config.num_epochs}",
+            unit="batch",
+        ):
             real_data = next(data_iter)[0].to(config.device)
             noise = torch.randn(
                 real_data.size(0), config.nz, 1, 1, device=config.device
@@ -87,35 +101,46 @@ def train(discriminator, generator, dataloader, config):
                 criterion,
                 config.device,
             )
+            epoch_loss_D += errD
 
             # Update Generator
             errG, D_G_z2 = update_generator(
-                generator, discriminator, noise, optimizerG, criterion, config.device
+                generator,
+                discriminator,
+                noise,
+                optimizerG,
+                criterion,
+                config.device,
             )
+            epoch_loss_G += errG
 
-            # Log metrics
-            wandb.log(
-                {
-                    "Loss_D": errD,
-                    "Loss_G": errG,
-                    "D(x)": D_x,
-                    "D(G(z))1": D_G_z1,
-                    "D(G(z))2": D_G_z2,
-                }
-            )
+            if i % config.log_step == 0:
+                wandb.log(
+                    {
+                        "Loss_D": epoch_loss_D / config.log_step,
+                        "Loss_G": epoch_loss_G / config.log_step,
+                        "D(x)": D_x,
+                        "D(G(z))1": D_G_z1,
+                        "D(G(z))2": D_G_z2,
+                    }
+                )
+                epoch_loss_D = 0.0
+                epoch_loss_G = 0.0
 
         # Log generated images after each epoch
-        log_generated_images(generator, fixed_noise, epoch, config.device)
+        img = log_generated_images(generator, fixed_noise, epoch, config.device)
+        img_list.append(img)
 
         # Save models every save_step epochs
         if epoch % config.save_step == 0 or epoch == config.num_epochs - 1:
             torch.save(
-                generator.state_dict(),
-                os.path.join(wandb.run.dir, f"generator_epoch_{epoch}.pth"),
+                {
+                    "generator": generator.state_dict(),
+                    "discriminator": discriminator.state_dict(),
+                },
+                Path("checkpoints") / f"epoch_{epoch}.pth",
             )
-            torch.save(
-                discriminator.state_dict(),
-                os.path.join(wandb.run.dir, f"discriminator_epoch_{epoch}.pth"),
-            )
+
+    create_gif(img_list, "training_progress.gif")
 
     wandb.finish()
