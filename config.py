@@ -24,12 +24,10 @@ class Config:
 
     # Trainer
     device: str = "cuda" if torch.cuda.is_available() else "cpu"
-    name: str = "debug_run"
+    name: str = "celeba_dataset"
     len_epoch: int = 1000
     log_step: int = 100
     save_step: int = 100
-    num_epochs: int = 30
+    num_epochs: int = 15
     ngpu: int = 1
-    fid_path_to_feats: str = (
-        "/home/hdilab04/arturgimranov/boutique_generative/fid_celeba_feats.pt"
-    )
+    fid_path_to_feats: str = None

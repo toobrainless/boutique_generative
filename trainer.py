@@ -1,3 +1,4 @@
+from dataclasses import asdict
 from pathlib import Path
 
 import torch
@@ -88,7 +89,7 @@ def log_generated_images(generator, fixed_noise, epoch, device):
 
 
 def train(discriminator, generator, dataloader, config):
-    wandb.init(project="gan_project", name=config.name)
+    wandb.init(project="gan_project", name=config.name, config=asdict(config))
     chdir(config)
 
     criterion = torch.nn.BCELoss()
@@ -185,7 +186,6 @@ def train(discriminator, generator, dataloader, config):
                     "discriminator": discriminator.state_dict(),
                 },
                 Path("checkpoints") / f"epoch_{epoch}.pth",
-                step=step,
             )
 
     create_gif(img_list, "training_progress.gif")

@@ -170,3 +170,4 @@ runs
 # sandboxes
 sandbox*
 *.pt
+*.png

@@ -1,12 +1,11 @@
 from config import Config
-from datasets import load_dataset
 from models import Discriminator, Generator
 from trainer import train
-from utils import ROOT_DIR, initialize_weights
+from utils import ROOT_DIR, initialize_weights, load_dataset
 
 
 def main(config):
-    dataset, dataloader = load_dataset(
+    _, dataloader = load_dataset(
         config.dataset_name,
         config.image_size,
         ROOT_DIR / config.dataroot,
