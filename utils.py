@@ -47,7 +47,7 @@ def initialize_weights(m):
         nn.init.constant_(m.bias.data, 0)
 
 
-def inf_loop(data_loader):
+def inf_loop(dataloader):
     """wrapper function for endless data loader."""
-    for loader in repeat(data_loader):
+    for loader in repeat(dataloader):
         yield from loader

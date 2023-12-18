@@ -166,3 +166,7 @@ celeba
 # logs
 wandb
 runs
+
+# sandboxes
+sandbox*
+*.pt

@@ -2,7 +2,7 @@ from config import Config
 from datasets import load_dataset
 from models import Discriminator, Generator
 from trainer import train
-from utils import ROOT_DIR, inf_loop, initialize_weights
+from utils import ROOT_DIR, initialize_weights
 
 
 def main(config):
@@ -13,8 +13,6 @@ def main(config):
         config.batch_size,
         config.workers,
     )
-
-    dataloader = inf_loop(dataloader)
 
     netG = Generator(config.ngpu, config.nz, config.ngf, config.nc).to(config.device)
     netD = Discriminator(config.ngpu, config.ndf, config.nc).to(config.device)
