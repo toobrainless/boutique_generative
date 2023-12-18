@@ -29,7 +29,7 @@ python3 main.py
 To evaluate model run the following script:
 
 ```
-python3 generate.py -c 
+python3 generate.py --checkpoint_path <path_to_checkpoint>
 ```
 
 
